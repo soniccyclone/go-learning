@@ -6,13 +6,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Config struct {
-	Port string `mapstructure:"port"`
+type config struct {
+	Port             string `mapstructure:"port"`
+	ConnectionString string `mapstructure:"connectionString"`
 }
 
-var AppConfig *Config
-
-func LoadAppConfig() {
+func LoadAppConfig() (*config, error) {
 	log.Println("Loading Server Configurations...")
 	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
@@ -21,8 +20,10 @@ func LoadAppConfig() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = viper.Unmarshal(&AppConfig)
-	if err != nil {
-		log.Fatal(err)
+	var appConfig *config
+	err = viper.Unmarshal(&appConfig)
+	if err == nil {
+		return appConfig, nil
 	}
+	return nil, err
 }

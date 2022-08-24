@@ -4,16 +4,20 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/soniccyclone/go-learning/database"
 	"github.com/soniccyclone/go-learning/entities"
+	"gorm.io/gorm"
 
 	"github.com/gorilla/mux"
 )
 
-func CreateProduct(w http.ResponseWriter, r *http.Request) {
+type ProductController struct {
+	Database *gorm.DB
+}
+
+func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var product entities.Product
 	json.NewDecoder(r.Body).Decode(&product)
-	err := database.Instance.Create(&product).Error
+	err := c.Database.Create(&product).Error
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, "Error while creating product!")
 	} else {
@@ -21,10 +25,10 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetProductById(w http.ResponseWriter, r *http.Request) {
+func (c *ProductController) GetProductById(w http.ResponseWriter, r *http.Request) {
 	productId := mux.Vars(r)["id"]
 	var product entities.Product
-	err := database.Instance.First(&product, productId).Error
+	err := c.Database.First(&product, productId).Error
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, "Product Not Found!")
 	} else {
@@ -32,28 +36,28 @@ func GetProductById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetProducts(w http.ResponseWriter, r *http.Request) {
+func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) {
 	var products []entities.Product
-	database.Instance.Find(&products)
+	c.Database.Find(&products)
 	writeResponse(w, http.StatusOK, products)
 }
 
-func UpdateProduct(w http.ResponseWriter, r *http.Request) {
+func (c *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	productId := mux.Vars(r)["id"]
 	var product entities.Product
-	err := database.Instance.First(&product, productId).Error
+	err := c.Database.First(&product, productId).Error
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, "Product Not Found!")
 	} else {
 		json.NewDecoder(r.Body).Decode(&product)
-		database.Instance.Save(&product)
+		c.Database.Save(&product)
 		writeResponse(w, http.StatusOK, product)
 	}
 }
 
-func DeleteProduct(w http.ResponseWriter, r *http.Request) {
+func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	productId := mux.Vars(r)["id"]
-	rows := database.Instance.Delete(&entities.Product{}, productId).RowsAffected
+	rows := c.Database.Delete(&entities.Product{}, productId).RowsAffected
 	if rows < 1 {
 		writeResponse(w, http.StatusInternalServerError, "Product Not Found!")
 	} else {
